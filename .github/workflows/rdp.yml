@@ -1,4 +1,5 @@
-name: Windows RDP with Ngrok
+
+name: 🖥️ Windows RDP with Cloudflared
 
 on:
   workflow_dispatch:
@@ -6,44 +7,46 @@ on:
 jobs:
   rdp:
     runs-on: windows-latest
+    timeout-minutes: 360
     
     steps:
-    - name: Setup RDP and Ngrok
+    - name: 🔧 Setup RDP
       run: |
-        # Configurar RDP
+        # Enable RDP
         Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         
-        # Descargar e instalar ngrok
-        Invoke-WebRequest -Uri "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-windows-amd64.zip" -OutFile "ngrok.zip"
-        Expand-Archive -Path "ngrok.zip" -DestinationPath "C:\ngrok" -Force
+        # Create RDP user
+        net user RDPUser Password123! /add /y
+        net localgroup administrators RDPUser /add
+        net localgroup "Remote Desktop Users" RDPUser /add
+
+    - name: 📥 Install Cloudflared
+      run: |
+        # Download and install Cloudflared
+        Invoke-WebRequest -Uri "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe" -OutFile "cloudflared.exe"
+        .\cloudflared.exe --version
+
+    - name: 🌐 Create Cloudflare Tunnel
+      run: |
+        # Create tunnel and get URL
+        Start-Process -FilePath "cloudflared.exe" -ArgumentList "tunnel --url rdp://localhost:3389" -NoNewWindow
+        Start-Sleep -Seconds 10
         
-        # Configurar ngrok con tu token
-        C:\ngrok\ngrok.exe config add-authtoken "${{ secrets.NGROK_AUTH_TOKEN }}"
-        
-        # Iniciar tunnel RDP
-        Start-Process -FilePath "C:\ngrok\ngrok.exe" -ArgumentList "tcp 3389" -NoNewWindow
-        
-        # Crear usuario RDP
-        $password = ConvertTo-SecureString "RdpPassword123!" -AsPlainText -Force
-        New-LocalUser -Name "RDPUser" -Password $password -FullName "RDP User" -Description "RDP Access"
-        Add-LocalGroupMember -Group "Remote Desktop Users" -Member "RDPUser"
-        
-        # Mostrar información de conexión
-        Start-Sleep -Seconds 15
+        # Get tunnel URL (Cloudflared shows it in logs)
         Write-Host "=== RDP ACCESS ==="
-        Write-Host "Waiting for ngrok tunnel..."
-        
-        # Obtener URL de ngrok
-        $tunnels = Invoke-RestMethod -Uri "http://localhost:4040/api/tunnels" -TimeoutSec 30
-        $publicUrl = $tunnels.tunnels[0].public_url
-        Write-Host "Address: $publicUrl"
+        Write-Host "Cloudflared tunnel starting..."
+        Write-Host "Check logs above for tunnel URL"
         Write-Host "Username: RDPUser"
-        Write-Host "Password: RdpPassword123!"
+        Write-Host "Password: Password123!"
         Write-Host "=================="
-        
-        # Mantener conexión activa
+
+    - name: 🔄 Keep Alive
+      run: |
+        # Keep the workflow running
         while ($true) {
-          Write-Host "[$(Get-Date)] RDP Active - Use Ctrl+C in workflow to terminate"
-          Start-Sleep -Seconds 300
+          Write-Host "[$(Get-Date)] RDP Active - Tunnel running"
+          Write-Host "Look for Cloudflared tunnel URL in previous step logs"
+          Write-Host "Use Ctrl+C in workflow to terminate"
+          Start-Sleep -Seconds 60
         }
