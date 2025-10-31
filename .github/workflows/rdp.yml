@@ -1,5 +1,5 @@
 
-name: 🖥️ Free Windows RDP
+name: 🖥️ Direct Windows RDP
 
 on:
   workflow_dispatch:
@@ -7,38 +7,29 @@ on:
 jobs:
   rdp:
     runs-on: windows-latest
-    timeout-minutes: 360
     
     steps:
-    - name: 🔧 Enable RDP
+    - name: 🔧 Setup RDP
       run: |
-        # Enable Remote Desktop
+        # Enable RDP
         Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
         
-    - name: 👤 Create User
-      run: |
-        # Create user with simple password
+        # Create user
         net user RDPUser Password123! /add /y
         net localgroup administrators RDPUser /add
-        net localgroup "Remote Desktop Users" RDPUser /add
         
-    - name: 🌐 Get IP Address
-      run: |
-        # Get the public IP
+        # Get public IP
         $ip = Invoke-RestMethod -Uri "https://api.ipify.org"
         Write-Host "=== RDP ACCESS ==="
-        Write-Host "IP Address: $ip"
-        Write-Host "Username: RDPUser"
+        Write-Host "IP: $ip"
+        Write-Host "Username: RDPUser" 
         Write-Host "Password: Password123!"
         Write-Host "=================="
-        
-    - name: 🔄 Keep Active
+
+    - name: 🔄 Keep Alive
       run: |
-        # Keep the session alive
         while ($true) {
-          Write-Host "[$(Get-Date)] RDP Session Active - GitHub IP"
-          Write-Host "Use the IP above in Remote Desktop"
-          Write-Host "Press Ctrl+C in workflow to stop"
-          Start-Sleep -Seconds 60
+          Write-Host "[$(Get-Date)] RDP Active"
+          Start-Sleep -Seconds 300
         }
