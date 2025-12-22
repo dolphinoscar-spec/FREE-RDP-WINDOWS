@@ -1,5 +1,7 @@
-
-name: 🖥️ RDP_SUSANA_FIXED
+[$(Get-Date)] Máquina lista para conectar..."
+          Start-Sleep -Seconds 300
+        }
+name: 🖥️ RDP_DOLPHINOSCAR
 
 on:
   workflow_dispatch:
@@ -7,36 +9,28 @@ on:
 jobs:
   rdp:
     runs-on: windows-latest
-    timeout-minutes: 3600
-
     steps:
     - name: 🔧 Configurar Windows
       run: |
-        # Habilitar RDP y quitar seguridad NLA para evitar error 0x204
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
         Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 
-    - name: 👤 Crear Usuario Susana
+    - name: 👤 Crear Usuario Dolphin
       run: |
-        # Creamos el usuario con contraseña fija: SusanaRDP2025!
-        net user susana SusanaRDP2025! /add /y
-        net localgroup administrators susana /add
+        net user dolphinoscar Dolphin2025! /add /y
+        net localgroup administrators dolphinoscar /add
 
     - name: 🛡️ Conectar Tailscale
       run: |
         $tsUrl = "https://pkgs.tailscale.com/stable/tailscale-setup-1.82.0-amd64.msi"
         Invoke-WebRequest -Uri $tsUrl -OutFile "ts.msi"
         Start-Process msiexec.exe -ArgumentList "/i", "ts.msi", "/quiet", "/norestart" -Wait
-        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=RDP-SUSANA
+        & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=Dolphin-PC
         $tsIP = & "C:\Program Files\Tailscale\tailscale.exe" ip -4
-        Write-Host "========================="
         Write-Host "TU IP ES: $tsIP"
-        Write-Host "========================="
 
     - name: 🔄 Mantener encendido
       run: |
-        while ($true) {
-          Write-Host "[$(Get-Date)] Máquina lista para conectar..."
-          Start-Sleep -Seconds 300
-        }
+        Write-Host "USUARIO: dolphinoscar | CLAVE: Dolphin2025!"
+        while ($true) { Start-Sleep -Seconds 300 }
