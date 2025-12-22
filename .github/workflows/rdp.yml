@@ -1,6 +1,3 @@
-[$(Get-Date)] Máquina lista para conectar..."
-          Start-Sleep -Seconds 300
-        }
 name: 🖥️ RDP_DOLPHINOSCAR
 
 on:
@@ -10,7 +7,7 @@ jobs:
   rdp:
     runs-on: windows-latest
     steps:
-    - name: 🔧 Configurar Windows
+    - name: 🔧 Configurar RDP
       run: |
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0
         Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0
@@ -28,9 +25,13 @@ jobs:
         Start-Process msiexec.exe -ArgumentList "/i", "ts.msi", "/quiet", "/norestart" -Wait
         & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=Dolphin-PC
         $tsIP = & "C:\Program Files\Tailscale\tailscale.exe" ip -4
+        Write-Host "========================="
         Write-Host "TU IP ES: $tsIP"
+        Write-Host "========================="
 
-    - name: 🔄 Mantener encendido
+    - name: 🔄 Mantener Conexión
       run: |
-        Write-Host "USUARIO: dolphinoscar | CLAVE: Dolphin2025!"
-        while ($true) { Start-Sleep -Seconds 300 }
+        while ($true) {
+          Write-Host "[$(Get-Date)] RDP Listo para dolphinoscar"
+          Start-Sleep -Seconds 300
+        }
